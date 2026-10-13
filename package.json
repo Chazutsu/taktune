@@ -27,6 +27,7 @@
   "main": "main.js",
   "scripts": {
     "build": "BUILD=production rolldown -c && tailwindcss -i src/styles.css -o styles.css --minify",
+    "check:toolchain": "node scripts/check-toolchain-compat.mjs",
     "build:visual": "rolldown -c rolldown.visual.config.ts && cp node_modules/virtual-obsidian/wasm-pkg/core_bg.wasm tests/visual/dist/core_bg.wasm",
     "check:release": "pnpm build && node scripts/check-taktune-release.mjs",
     "test": "vitest run",
