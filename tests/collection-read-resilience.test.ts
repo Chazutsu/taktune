@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const require = createRequire(import.meta.url);
 const {
+	readThroughPendingCache,
 	readWithDeadline,
 	settleAvailable,
 } = require("../src/collection-read-resilience-domain.cjs");
@@ -29,17 +30,55 @@ describe("Taktune collection read resilience", () => {
 		expect(result.failedFiles).toEqual([files[1]]);
 	});
 
-	it("全ノートを並行に読み、失敗があっても成功値を順序通り返す", async () => {
+	it("同時読み込みを4件に制限し、失敗があっても成功値を順序通り返す", async () => {
 		const started: string[] = [];
-		const files = [{ path: "a.md" }, { path: "b.md" }, { path: "c.md" }];
+		let active = 0;
+		let peak = 0;
+		const files = Array.from({ length: 9 }, (_, index) => ({ path: `${index}.md` }));
 		const result = await settleAvailable(files, async (file: { path: string }) => {
 			started.push(file.path);
-			if (file.path === "b.md") throw new Error("evicted");
+			active += 1;
+			peak = Math.max(peak, active);
+			await Promise.resolve();
+			active -= 1;
+			if (file.path === "4.md") throw new Error("evicted");
 			return file.path;
 		});
 
-		expect(started).toEqual(["a.md", "b.md", "c.md"]);
-		expect(result.values).toEqual(["a.md", "c.md"]);
-		expect(result.failedFiles).toEqual([files[1]]);
+		expect(started).toEqual(files.map((file) => file.path));
+		expect(peak).toBe(4);
+		expect(result.values).toEqual(files.filter((_, index) => index !== 4).map((file) => file.path));
+		expect(result.failedFiles).toEqual([files[4]]);
+	});
+
+	it("指定した同時読み込み数を1以上の整数へ正規化する", async () => {
+		const files = [{ path: "a.md" }, { path: "b.md" }];
+		const result = await settleAvailable(files, async (file: { path: string }) => file.path, 0);
+
+		expect(result.values).toEqual(["a.md", "b.md"]);
+	});
+
+	it("期限切れ後の再試行で未完了の実読み込みを重複させない", async () => {
+		vi.useFakeTimers();
+		const cache = new Map<string, Promise<string>>();
+		let resolveRead: (value: string) => void = () => undefined;
+		const underlying = new Promise<string>((resolve) => {
+			resolveRead = resolve;
+		});
+		const read = vi.fn(() => underlying);
+		const attempt = () =>
+			readWithDeadline(() => readThroughPendingCache(cache, "icloud.md", read), "icloud.md", 25);
+
+		const first = attempt();
+		const firstResult = expect(first).rejects.toMatchObject({
+			code: "TAKTUNE_COLLECTION_READ_TIMEOUT",
+		});
+		await vi.advanceTimersByTimeAsync(25);
+		await firstResult;
+		const retry = attempt();
+		expect(read).toHaveBeenCalledTimes(1);
+		resolveRead("downloaded");
+		await expect(retry).resolves.toBe("downloaded");
+		expect(cache.size).toBe(0);
 	});
 });
