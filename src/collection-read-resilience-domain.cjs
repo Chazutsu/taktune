@@ -11,8 +11,36 @@ function readWithDeadline(read, path, timeoutMs) {
 	return Promise.race([readPromise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
 }
 
-async function settleAvailable(files, load) {
-	const settled = await Promise.allSettled(files.map(load));
+function readThroughPendingCache(cache, key, read) {
+	let pending = cache.get(key);
+	if (pending) return pending;
+	pending = Promise.resolve().then(read);
+	cache.set(key, pending);
+	const clear = () => {
+		if (cache.get(key) === pending) cache.delete(key);
+	};
+	pending.then(clear, clear);
+	return pending;
+}
+
+async function settleAvailable(files, load, concurrency = 4) {
+	const width = Math.max(1, Math.min(files.length || 1, Math.floor(concurrency) || 1));
+	const settled = Array.from({ length: files.length });
+	let nextIndex = 0;
+
+	async function worker() {
+		while (nextIndex < files.length) {
+			const index = nextIndex;
+			nextIndex += 1;
+			try {
+				settled[index] = { status: "fulfilled", value: await load(files[index]) };
+			} catch (reason) {
+				settled[index] = { status: "rejected", reason };
+			}
+		}
+	}
+
+	await Promise.all(Array.from({ length: width }, () => worker()));
 	const values = [];
 	const failedFiles = [];
 	for (let index = 0; index < settled.length; index += 1) {
@@ -23,4 +51,4 @@ async function settleAvailable(files, load) {
 	return { values, failedFiles };
 }
 
-module.exports = { readWithDeadline, settleAvailable };
+module.exports = { readThroughPendingCache, readWithDeadline, settleAvailable };

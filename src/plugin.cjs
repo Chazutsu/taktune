@@ -98,7 +98,11 @@ const {
 	loadWithDeadline,
 	shouldApplyRefresh,
 } = require("./external-resilience-domain.cjs");
-const { readWithDeadline, settleAvailable } = require("./collection-read-resilience-domain.cjs");
+const {
+	readThroughPendingCache,
+	readWithDeadline,
+	settleAvailable,
+} = require("./collection-read-resilience-domain.cjs");
 const {
 	availableScheduleSlots,
 	batchScheduleSlots: buildBatchScheduleSlots,
@@ -4672,12 +4676,17 @@ module.exports = class TaktunePlugin extends Plugin {
 	}
 
 	async cachedVaultRead(file, cache) {
-		const read = () =>
-			readWithDeadline(
-				() => this.app.vault.cachedRead(file),
+		this.pendingCollectionReads ||= new Map();
+		const read = () => {
+			const pending = readThroughPendingCache(this.pendingCollectionReads, file.path, () =>
+				this.app.vault.cachedRead(file),
+			);
+			return readWithDeadline(
+				() => pending,
 				file.path,
 				this.collectionReadTimeoutMs ?? COLLECTION_READ_TIMEOUT_MS,
 			);
+		};
 		if (!cache) return read();
 		if (!cache.has(file.path)) cache.set(file.path, read());
 		return cache.get(file.path);
