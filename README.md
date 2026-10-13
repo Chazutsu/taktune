@@ -159,6 +159,11 @@ The **Release Taktune** workflow checks version consistency, runs the regression
 
 See [FEATURE-GAP.md](FEATURE-GAP.md) for the detailed product-quality audit and [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) for product-specific design rules.
 
+## Support
+
+- [Sponsor continued development](https://github.com/sponsors/ryo-ebata)
+- [Report a bug or request a feature](https://github.com/Chazutsu/taktune/issues)
+
 ## License
 
 [MIT](LICENSE)

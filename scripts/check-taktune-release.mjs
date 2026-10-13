@@ -31,3 +31,5 @@ validateReleaseArtifactContents(artifacts);
 
 console.log(`Taktune ${requestedVersion} release artifacts are consistent`);
 for (const artifact of artifacts) console.log(`${artifact.name} sha256:${artifact.digest.slice(0, 12)} bytes:${artifact.content.length}`);
+console.log("Support development: https://github.com/sponsors/ryo-ebata");
+console.log("Report issues: https://github.com/Chazutsu/taktune/issues");

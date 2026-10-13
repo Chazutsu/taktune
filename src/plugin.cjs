@@ -7632,6 +7632,32 @@ class TaktuneSettingTab extends PluginSettingTab {
 						}
 					}),
 			);
+
+		const supportSection = createSection(
+			this.plugin.t("settings.support.section"),
+			this.plugin.t("settings.support.description"),
+		);
+		const addSupportLink = (name, description, label, href) => {
+			const setting = new Setting(supportSection).setName(name).setDesc(description);
+			setting.controlEl.createEl("a", {
+				text: label,
+				href,
+				cls: "mod-cta",
+				attr: { target: "_blank", rel: "noopener noreferrer" },
+			});
+		};
+		addSupportLink(
+			this.plugin.t("settings.support.donate"),
+			this.plugin.t("settings.support.donateDescription"),
+			this.plugin.t("settings.support.donate"),
+			"https://github.com/sponsors/ryo-ebata",
+		);
+		addSupportLink(
+			this.plugin.t("settings.support.issues"),
+			this.plugin.t("settings.support.issuesDescription"),
+			this.plugin.t("settings.support.issues"),
+			"https://github.com/Chazutsu/taktune/issues",
+		);
 	}
 }
 

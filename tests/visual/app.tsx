@@ -81,7 +81,11 @@ function TodayPreview() {
 				/>
 			</header>
 			<TodayFocus
-				model={{ item: { ...tasks[0], title: html("移行手順を確定し、関係者レビューへ出す") } }}
+				model={{
+					item: { ...tasks[0], title: html("移行手順を確定し、関係者レビューへ出す") },
+					directSubtaskCount: 3,
+					incompleteSubtaskCount: 2,
+				}}
 			/>
 			<section aria-label="今日のタスク">
 				<TaskList

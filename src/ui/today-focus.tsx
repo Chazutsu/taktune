@@ -6,6 +6,8 @@ import type { TaskListItem, TaskListModel } from "./task-list";
 
 export interface TodayFocusModel {
 	item: TaskListItem;
+	directSubtaskCount: number;
+	incompleteSubtaskCount: number;
 }
 
 export function extractTodayFocus(model: TaskListModel): {
@@ -24,22 +26,31 @@ export function extractTodayFocus(model: TaskListModel): {
 		let endIndex = itemIndex + 1;
 		while (endIndex < group.items.length && (group.items[endIndex]?.depth ?? 0) > item.depth)
 			endIndex += 1;
+		const directSubtasks = group.items
+			.slice(itemIndex + 1, endIndex)
+			.filter((candidate) => candidate.depth === item.depth + 1);
 		const groups = model.groups
 			.map((candidate, candidateIndex) =>
 				candidateIndex === groupIndex
 					? {
 							...candidate,
-							items: candidate.items.flatMap((candidateItem, index) => {
-								if (index === itemIndex) return [];
-								if (index > itemIndex && index < endIndex)
-									return [{ ...candidateItem, depth: Math.max(0, candidateItem.depth - 1) }];
-								return [candidateItem];
-							}),
+							items: candidate.items.filter(
+								(_candidateItem, index) => index < itemIndex || index >= endIndex,
+							),
 						}
 					: candidate,
 			)
 			.filter((candidate) => candidate.items.length > 0);
-		return { focus: { item }, remaining: { ...model, groups } };
+		return {
+			focus: {
+				item,
+				directSubtaskCount: directSubtasks.length,
+				incompleteSubtaskCount: directSubtasks.filter(
+					(candidate) => !candidate.done && !candidate.wontDo && !candidate.disabled,
+				).length,
+			},
+			remaining: { ...model, groups },
+		};
 	}
 	return { focus: null, remaining: model };
 }
@@ -70,6 +81,14 @@ export function TodayFocus({ model }: { model: TodayFocusModel }): ReactElement 
 							<span key={`${meta.label}-${index}`}>{meta.label}</span>
 						))}
 					</div>
+					{model.directSubtaskCount > 0 ? (
+						<p className="mb-0 mt-1 text-[11px] text-ttd-muted">
+							{t("todayFocus.subtasks", {
+								total: model.directSubtaskCount,
+								incomplete: model.incompleteSubtaskCount,
+							})}
+						</p>
+					) : null}
 				</button>
 				<button
 					type="button"
