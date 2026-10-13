@@ -23,7 +23,12 @@ function readThroughPendingCache(cache, key, read) {
 	return pending;
 }
 
-async function settleAvailable(files, load, concurrency = 4, deadlineMs = Number.POSITIVE_INFINITY) {
+async function settleAvailable(
+	files,
+	load,
+	concurrency = 4,
+	deadlineMs = Number.POSITIVE_INFINITY,
+) {
 	const width = Math.max(1, Math.min(files.length || 1, Math.floor(concurrency) || 1));
 	const settled = Array.from({ length: files.length });
 	let nextIndex = 0;
