@@ -5,7 +5,7 @@ import {
 	useRef,
 	useState,
 	type CSSProperties,
-	type KeyboardEvent,
+	type KeyboardEvent as ReactKeyboardEvent,
 	type ReactElement,
 } from "react";
 import { createPortal } from "react-dom";
@@ -73,7 +73,7 @@ export function OverflowMenu({
 
 	useEffect(() => {
 		if (!open) return;
-		const keyDown = (event: globalThis.KeyboardEvent) => {
+		const keyDown = (event: KeyboardEvent) => {
 			if (event.key !== "Escape") return;
 			event.preventDefault();
 			close(true);
@@ -96,7 +96,7 @@ export function OverflowMenu({
 		};
 	}, [close, open]);
 
-	const onMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+	const onMenuKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
 		if (event.key === "Escape") {
 			event.preventDefault();
 			close(true);

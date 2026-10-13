@@ -1,4 +1,4 @@
-import { useMemo, useState, type FormEvent, type ReactElement } from "react";
+import { useMemo, useState, type ReactElement, type SyntheticEvent } from "react";
 import { useI18n } from "./i18n";
 
 interface CalendarSource {
@@ -57,7 +57,7 @@ export function CalendarListFilterDialog({
 	};
 	return (
 		<form
-			onSubmit={(event: FormEvent) => {
+			onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
 				event.preventDefault();
 				void save(false);
 			}}
@@ -156,7 +156,7 @@ export function GoogleCalendarSourcesDialog({
 	};
 	return (
 		<form
-			onSubmit={(event: FormEvent) => {
+			onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
 				event.preventDefault();
 				void save();
 			}}

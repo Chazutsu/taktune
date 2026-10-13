@@ -29,6 +29,7 @@ export function BatchActions({ model }: { model: BatchActionsModel }): ReactElem
 	const [due, setDue] = useState("");
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState("");
+	const [confirmingDelete, setConfirmingDelete] = useState(false);
 	const disabled = pending || model.selectedCount === 0;
 	const apply = async (action: BatchAction, value = ""): Promise<void> => {
 		if (disabled) return;
@@ -43,7 +44,7 @@ export function BatchActions({ model }: { model: BatchActionsModel }): ReactElem
 		}
 	};
 	const remove = (): void => {
-		if (!window.confirm(t("batch.confirmDelete", { count: model.selectedCount }))) return;
+		setConfirmingDelete(false);
 		void apply("delete");
 	};
 	const control = "h-[30px] min-w-0 text-[11px] max-[620px]:h-11";
@@ -172,12 +173,31 @@ export function BatchActions({ model }: { model: BatchActionsModel }): ReactElem
 				<button
 					type="button"
 					disabled={disabled}
-					onClick={remove}
+					onClick={() => setConfirmingDelete(true)}
 					className={`mod-warning ${button}`}
 				>
 					{t("batch.delete")}
 				</button>
 			</div>
+			{confirmingDelete ? (
+				<div
+					role="alertdialog"
+					aria-label={t("batch.confirmDelete", { count: model.selectedCount })}
+					className="mt-1.5 flex items-center justify-between gap-2 rounded-md bg-[var(--background-modifier-error)] px-2 py-1.5 max-[620px]:grid"
+				>
+					<p className="m-0 text-[11px] text-[var(--text-normal)]">
+						{t("batch.confirmDelete", { count: model.selectedCount })}
+					</p>
+					<div className="flex shrink-0 gap-1.5">
+						<button type="button" onClick={() => setConfirmingDelete(false)} className={button}>
+							{t("common.cancel")}
+						</button>
+						<button type="button" onClick={remove} className={`mod-warning ${button}`}>
+							{t("batch.delete")}
+						</button>
+					</div>
+				</div>
+			) : null}
 			{error ? (
 				<p role="alert" className="mb-0 mt-1 text-[11px] text-[var(--text-error)]">
 					{error}

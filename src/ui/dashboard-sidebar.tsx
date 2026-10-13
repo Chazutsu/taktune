@@ -66,6 +66,14 @@ function useMobileSidebar(): boolean {
 	return mobile;
 }
 
+function isHTMLElement(element: Element): element is HTMLElement {
+	const HTMLElementConstructor = element.ownerDocument.defaultView?.HTMLElement;
+	return Boolean(
+		HTMLElementConstructor &&
+		Object.prototype.isPrototypeOf.call(HTMLElementConstructor.prototype, element),
+	);
+}
+
 function NavButton({
 	item,
 	activeId,
@@ -257,7 +265,7 @@ function TaxonomyRows({
 				const onDrop = (event: DragEvent<HTMLDivElement>) => {
 					event.preventDefault();
 					const from = event.dataTransfer.getData("application/x-ttd-taxonomy");
-					if (from && from !== item.value) model.onReorderTaxonomy(kind, from, item.value);
+					if (from && from !== item.value) void model.onReorderTaxonomy(kind, from, item.value);
 				};
 				return (
 					<div key={item.id}>
@@ -343,7 +351,7 @@ export function DashboardSidebar({ model }: { model: SidebarModel }): ReactEleme
 		if (!sidebar || !parent) return;
 		const background = Array.from(parent.children).filter(
 			(element): element is HTMLElement =>
-				element instanceof HTMLElement && !element.hasAttribute("data-sidebar-layer"),
+				isHTMLElement(element) && !element.hasAttribute("data-sidebar-layer"),
 		);
 		const previous = background.map((element) => ({
 			element,

@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactElement } from "react";
+import { useState, type ReactElement, type SyntheticEvent } from "react";
 import { useI18n } from "./i18n";
 
 export interface NameDialogModel {
@@ -13,7 +13,7 @@ export function NameDialog({ model }: { model: NameDialogModel }): ReactElement 
 	const [value, setValue] = useState("");
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState("");
-	const submit = async (event: FormEvent): Promise<void> => {
+	const submit = async (event: SyntheticEvent<HTMLFormElement>): Promise<void> => {
 		event.preventDefault();
 		if (!value.trim() || pending) return;
 		setPending(true);
@@ -76,7 +76,7 @@ export function MergeTasksDialog({ model }: { model: MergeTasksDialogModel }): R
 	const [targetKey, setTargetKey] = useState(model.items[0]?.key ?? "");
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState("");
-	const submit = async (event: FormEvent): Promise<void> => {
+	const submit = async (event: SyntheticEvent<HTMLFormElement>): Promise<void> => {
 		event.preventDefault();
 		if (!targetKey || pending) return;
 		setPending(true);

@@ -1,4 +1,4 @@
-import { useId, useMemo, useState, type FormEvent, type ReactElement } from "react";
+import { useId, useMemo, useState, type ReactElement, type SyntheticEvent } from "react";
 import { Icon } from "./icon";
 import { useI18n } from "./i18n";
 
@@ -24,7 +24,7 @@ export function QuickAdd({ model }: { model: QuickAddModel }): ReactElement {
 	const templateSelectId = useId();
 	const preview = useMemo(() => model.onPreview(description, due), [description, due, model]);
 
-	const submit = async (event: FormEvent) => {
+	const submit = async (event: SyntheticEvent<HTMLFormElement>) => {
 		event.preventDefault();
 		if (!description.trim() || submitting) return;
 		setSubmitting(true);
