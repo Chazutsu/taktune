@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-13
+
+### Fixed
+
+- Bounded concurrent reads from iCloud-backed task collections and reused pending reads to prevent duplicate vault work.
+- Added an eight-second collection-wide deadline so unavailable iCloud files can no longer leave the dashboard in a loading state indefinitely.
+- Replaced deprecated and browser-global clipboard access in diagnostics with the active Obsidian window's Clipboard API.
+- Replaced direct DOM styling and non-Obsidian element helpers across dialogs, menus, and batch actions, clearing all local Obsidian policy warnings.
+
+### Changed
+
+- Added the official Obsidian ESLint rules as a dedicated local and CI policy check while retaining Oxlint as the fast general-purpose linter.
+- Expanded TypeScript scanner coverage to include the plugin entrypoint and configuration files used by the official Obsidian scanner.
+- Pinned GitHub Actions to immutable revisions, moved automation to Node.js 24-compatible action releases, and standardized CI on Ubuntu 24.04.
+
+### Security
+
+- Updated vulnerable development dependencies and enforced patched transitive test tooling versions.
+- Kept security-sensitive Obsidian policy rules as CI errors while reducing non-security scanner findings to zero before release.
+
 ## [0.1.2] - 2026-10-13
 
 ### Changed
@@ -58,7 +78,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added release artifact checks for metadata consistency, required bundle files, user-specific absolute paths, and inline source maps.
 - Migrated external integration credentials to Obsidian SecretStorage and removed plaintext secrets from settings persistence and backups.
 
-[Unreleased]: https://github.com/Chazutsu/taktune/compare/0.1.2...HEAD
+[Unreleased]: https://github.com/Chazutsu/taktune/compare/0.1.3...HEAD
+[0.1.3]: https://github.com/Chazutsu/taktune/compare/0.1.2...0.1.3
 [0.1.2]: https://github.com/Chazutsu/taktune/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/Chazutsu/taktune/compare/v0.1.0...0.1.1
 [0.1.0]: https://github.com/Chazutsu/taktune/releases/tag/v0.1.0
