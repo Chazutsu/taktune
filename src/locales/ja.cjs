@@ -743,7 +743,7 @@ module.exports = {
 	"settings.integrations.calendar": "カレンダー",
 	"settings.integrations.google": "Googleカレンダー",
 	"settings.integrations.googleDescription":
-		"デスクトップはgwsで読み取り、同期済みキャッシュをiPhoneの時間割にも表示する。",
+		"デスクトップとモバイルでVault内の同期済みキャッシュを読む。リアルタイム更新にはICS購読を使う。",
 	"settings.integrations.gws": "gws実行ファイル",
 	"settings.integrations.gwsDescription":
 		"通常は空欄で自動検出する。見つからない場合だけ絶対パスを指定する。",

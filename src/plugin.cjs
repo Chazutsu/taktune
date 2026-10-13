@@ -60,7 +60,6 @@ const {
 	googleCalendarCacheAge,
 	googleCalendarCacheCovers,
 	googleCalendarCacheForRange,
-	mergeGoogleCalendarCache,
 } = require("./calendar-cache-domain.cjs");
 const {
 	calendarBlockLayout,
@@ -77,7 +76,6 @@ const {
 } = require("./calendar-view-domain.cjs");
 const { createCalendarControlsDomain } = require("./calendar-controls-domain.cjs");
 const { createCalendarActivityDomain } = require("./calendar-activity-domain.cjs");
-const { GuardedWriteQueue } = require("./calendar-cache-write-domain.cjs");
 const { createCaptureDomain } = require("./capture-domain.cjs");
 const { createDashboardNavigationDomain } = require("./dashboard-navigation-domain.cjs");
 const { primaryNavigation, screenValues, usesTaskList } = require("./dashboard-shell-domain.cjs");
@@ -97,8 +95,6 @@ const {
 } = require("./external-refresh-domain.cjs");
 const {
 	EXTERNAL_SOURCE_TIMEOUT_MS,
-	combinedAbortSignal,
-	createPageTokenGuard,
 	loadWithDeadline,
 	shouldApplyRefresh,
 } = require("./external-resilience-domain.cjs");
@@ -115,11 +111,7 @@ const {
 	timelineMinutesFromOffset,
 	timeOf,
 } = require("./time-block-domain.cjs");
-const {
-	createEnvironmentDiagnostics,
-	gwsExecutableCandidates,
-	settledCalendarGroups,
-} = require("./diagnostics-domain.cjs");
+const { createEnvironmentDiagnostics, settledCalendarGroups } = require("./diagnostics-domain.cjs");
 const { createIcsDomain } = require("./ics-domain.cjs");
 const { createPlanningDomain, resolveReviewFocusTaskKey } = require("./planning-domain.cjs");
 const { planningGuideNavigationState, planningGuideState } = require("./planning-guide-domain.cjs");
@@ -139,15 +131,6 @@ const { createAtomicManifestBackend } = require("./task-mutation-atomic-backend.
 const { closeTaktuneView } = require("./view-lifecycle-domain.cjs");
 const { createTaskListDomain } = require("./task-list-domain.cjs");
 const { isRelevantVaultRenderEvent, markRenderDirtyIfBusy } = require("./vault-render-domain.cjs");
-let execFileAsync = null;
-try {
-	const { execFile } = require("node:child_process");
-	const { promisify } = require("node:util");
-	execFileAsync = promisify(execFile);
-} catch {
-	// Obsidian Mobile has no Node.js process API; Vault and HTTP features remain available.
-}
-
 const VIEW_TYPE = "ticktick-dashboard-view";
 const COLLECTION_READ_TIMEOUT_MS = 8_000;
 const COLLECTION_FAILURE_STATE_KEY = "\0taktune-collection-failures";
@@ -274,8 +257,11 @@ function reviewSourceSuffix(task) {
 	const label = externalSourceLabel(task);
 	return label ? `（${label}）` : "";
 }
-const { googleCalendarEvents, googleCalendarList, jiraIssues, linearIssues, slackBookmarks } =
-	createExternalSourceDomain({ addDays, localDate, t: domainT });
+const { jiraIssues, linearIssues, slackBookmarks } = createExternalSourceDomain({
+	addDays,
+	localDate,
+	t: domainT,
+});
 const { calendarPlanningState, planTrayVisibleTasks, sortPlanTrayTasks } = createPlanningDomain({
 	describeTask: cleanDescription,
 	matchesQuery: matchesCalendarQuery,
@@ -4511,8 +4497,6 @@ module.exports = class TaktunePlugin extends Plugin {
 			googleCalendarCache,
 			googleCalendarEnabled: this.settings.googleCalendarEnabled,
 			inboxPresent: Boolean(this.app.vault.getAbstractFileByPath(this.inboxPath())),
-			isMobile: Platform.isMobileApp,
-			nodeSupport: Boolean(execFileAsync),
 			notificationPermission,
 			performanceSnapshot: this.performanceSnapshot,
 			secretStorage: Boolean(this.app.secretStorage),
@@ -6784,90 +6768,41 @@ module.exports = class TaktunePlugin extends Plugin {
 		}
 	}
 
-	async writeGoogleCalendarCache(items, rangeStart, rangeEnd, shouldWrite = () => true) {
-		this.googleCalendarCacheWriter ||= new GuardedWriteQueue();
-		return this.googleCalendarCacheWriter.enqueue(shouldWrite, async (isCurrent) => {
-			const adapter = this.app.vault.adapter;
-			const directory = normalizePath(this.settings.dataDirectory);
-			await this.ensureVaultDirectory(directory);
-			const current = await this.readGoogleCalendarCache();
-			if (!isCurrent()) return;
-			const cache = mergeGoogleCalendarCache(
-				current,
-				items,
-				new Date().toISOString(),
-				localDate(),
-				{
-					start: rangeStart,
-					end: rangeEnd,
-				},
-			);
-			await adapter.write(
-				normalizePath(`${directory}/google-calendar-cache.json`),
-				`${JSON.stringify(cache)}\n`,
-			);
-		});
-	}
-
-	async loadCalendar(
-		calendarDate,
-		calendarDays = 1,
-		{ signal, shouldWriteCache = () => true } = {},
-	) {
-		const start = new Date(`${calendarDate}T00:00:00`);
-		const end = new Date(`${addDays(calendarDate, calendarDays)}T00:00:00`);
+	async loadCalendar(calendarDate, calendarDays = 1) {
 		const sources = [];
 		let mobileCache = null;
 		if (this.settings.googleCalendarEnabled) {
 			const ids = selectedCalendarIds(this.settings);
-			if (execFileAsync) {
-				sources.push(
-					...ids.map((calendarId) => ({
-						kind: "google",
-						label:
-							this.settings.googleCalendarMeta?.[calendarId]?.name ||
-							(calendarId === "primary" ? "Google Calendar" : calendarId),
-						load: (sourceSignal) =>
-							this.loadCalendarEvents(
-								calendarId,
-								start,
-								end,
-								combinedAbortSignal(signal, sourceSignal),
-							),
-					})),
-				);
-			} else {
-				mobileCache = await this.readGoogleCalendarCache();
-				sources.push({
-					kind: "google-cache",
-					label: "Google Calendar",
-					load: async () => {
-						if (!googleCalendarCacheAge(mobileCache).available)
-							throw new Error(this.t("error.calendarCache.missing"));
-						if (
-							!googleCalendarCacheCovers(
-								mobileCache,
-								calendarDate,
-								addDays(calendarDate, calendarDays),
-							)
-						)
-							throw new Error(this.t("error.calendarCache.rangeMissing"));
-						const age = googleCalendarCacheAge(mobileCache);
-						const suffix = this.t(age.stale ? "calendarCache.stale" : "calendarCache.synced", {
-							hours: age.hours,
-						});
-						return googleCalendarCacheForRange(
+			mobileCache = await this.readGoogleCalendarCache();
+			sources.push({
+				kind: "google-cache",
+				label: "Google Calendar",
+				load: async () => {
+					if (!googleCalendarCacheAge(mobileCache).available)
+						throw new Error(this.t("error.calendarCache.missing"));
+					if (
+						!googleCalendarCacheCovers(
 							mobileCache,
-							ids,
 							calendarDate,
 							addDays(calendarDate, calendarDays),
-						).map((item) => ({
-							...item,
-							calendarName: `${item.calendarName || "Google Calendar"}（${suffix}）`,
-						}));
-					},
-				});
-			}
+						)
+					)
+						throw new Error(this.t("error.calendarCache.rangeMissing"));
+					const age = googleCalendarCacheAge(mobileCache);
+					const suffix = this.t(age.stale ? "calendarCache.stale" : "calendarCache.synced", {
+						hours: age.hours,
+					});
+					return googleCalendarCacheForRange(
+						mobileCache,
+						ids,
+						calendarDate,
+						addDays(calendarDate, calendarDays),
+					).map((item) => ({
+						...item,
+						calendarName: `${item.calendarName || "Google Calendar"}（${suffix}）`,
+					}));
+				},
+			});
 		}
 		sources.push(
 			...(this.settings.calendarSubscriptions || [])
@@ -6890,27 +6825,9 @@ module.exports = class TaktunePlugin extends Plugin {
 			),
 		);
 		const settled = settledCalendarGroups(sources, results, domainT);
-		if (execFileAsync && this.settings.googleCalendarEnabled) {
-			const googleResults = results.filter((_, index) => sources[index].kind === "google");
-			const googleItems = results.flatMap((result, index) =>
-				sources[index].kind === "google" && result.status === "fulfilled" ? result.value : [],
-			);
-			if (googleResults.length && googleResults.every((result) => result.status === "fulfilled")) {
-				try {
-					await this.writeGoogleCalendarCache(
-						googleItems,
-						calendarDate,
-						addDays(calendarDate, calendarDays),
-						shouldWriteCache,
-					);
-				} catch (error) {
-					settled.errors.push(this.t("error.calendarCache.update", { error: error.message }));
-				}
-			}
-		}
 		if (settled.errors.length && settled.items.length === 0)
 			throw new Error(settled.errors.join(" / "));
-		if (!execFileAsync && mobileCache && googleCalendarCacheAge(mobileCache).stale)
+		if (mobileCache && googleCalendarCacheAge(mobileCache).stale)
 			settled.errors.push(
 				this.t("error.calendarCache.stale", { hours: googleCalendarCacheAge(mobileCache).hours }),
 			);
@@ -6925,70 +6842,18 @@ module.exports = class TaktunePlugin extends Plugin {
 		return parseIcsCalendar(response.text, subscription, rangeStart, rangeEnd);
 	}
 
-	async loadCalendarEvents(calendarId, start, end, signal) {
-		if (!execFileAsync) throw new Error(this.t("error.gws.calendarDesktopOnly"));
-		const events = [];
-		let pageToken = "";
-		const pages = createPageTokenGuard();
-		do {
-			const params = JSON.stringify(
-				calendarRequestParams(calendarId, start.toISOString(), end.toISOString(), pageToken),
-			);
-			const { stdout } = await this.execGws(["calendar", "events", "list", "--params", params], {
-				signal,
-			});
-			const data = JSON.parse(stdout);
-			events.push(...(data.items || []));
-			pageToken = data.nextPageToken || "";
-			pages.accept(pageToken);
-		} while (pageToken);
-		const meta = this.settings.googleCalendarMeta?.[calendarId] || {};
-		return googleCalendarEvents(events, calendarId, meta);
-	}
-
 	async listGoogleCalendars() {
-		const calendars = [];
-		let pageToken = "";
-		const pages = createPageTokenGuard();
-		do {
-			const params = JSON.stringify({ maxResults: 250, ...(pageToken ? { pageToken } : {}) });
-			const { stdout } = await this.execGws([
-				"calendar",
-				"calendarList",
-				"list",
-				"--params",
-				params,
-			]);
-			const data = JSON.parse(stdout);
-			calendars.push(...googleCalendarList(data.items));
-			pageToken = data.nextPageToken || "";
-			pages.accept(pageToken);
-		} while (pageToken);
-		return calendars;
-	}
-
-	async execGws(args, { signal } = {}) {
-		if (!execFileAsync) throw new Error(this.t("error.gws.desktopOnly"));
-		const home = globalThis.process?.env?.HOME || "";
-		const candidates = gwsExecutableCandidates(
-			this.settings.gwsExecutable,
-			home,
-			this.resolvedGwsExecutable,
-		);
-		for (const executable of candidates) {
-			try {
-				const result = await execFileAsync(executable, args, {
-					maxBuffer: 16 * 1024 * 1024,
-					...(signal ? { signal } : {}),
-				});
-				this.resolvedGwsExecutable = executable;
-				return result;
-			} catch (error) {
-				if (error?.code === "ENOENT") continue;
-				throw error;
-			}
+		const cache = await this.readGoogleCalendarCache();
+		const calendars = new Map();
+		for (const item of cache?.items || []) {
+			if (!item.calendarId || calendars.has(item.calendarId)) continue;
+			calendars.set(item.calendarId, {
+				id: item.calendarId,
+				name: item.calendarName || item.calendarId,
+				color: item.color || "",
+			});
 		}
-		throw new Error(this.t("error.gws.notFound"));
+		return [...calendars.values()];
 	}
 
 	async loadLinear() {
@@ -7500,19 +7365,6 @@ class TaktuneSettingTab extends PluginSettingTab {
 				}),
 			);
 		new Setting(integrationsSection)
-			.setName(this.plugin.t("settings.integrations.gws"))
-			.setDesc(this.plugin.t("settings.integrations.gwsDescription"))
-			.addText((text) =>
-				text
-					.setPlaceholder(this.plugin.t("settings.integrations.autoDetect"))
-					.setValue(this.plugin.settings.gwsExecutable || "")
-					.onChange(async (value) => {
-						this.plugin.settings.gwsExecutable = value.trim();
-						this.plugin.resolvedGwsExecutable = "";
-						await this.plugin.saveSettings();
-					}),
-			);
-		new Setting(integrationsSection)
 			.setName(this.plugin.t("settings.integrations.calendarId"))
 			.setDesc(this.plugin.t("settings.integrations.calendarIdDescription"))
 			.addText((text) =>
@@ -7697,7 +7549,6 @@ module.exports.__test = {
 	externalSourceLabel,
 	externalItemStateForTasks,
 	environmentDiagnostics,
-	gwsExecutableCandidates,
 	settledCalendarGroups,
 	calendarPlanningState,
 	planTrayVisibleTasks,
@@ -7712,7 +7563,6 @@ module.exports.__test = {
 	batchScheduleSlots,
 	taskLineWithTime,
 	calendarCacheKey,
-	mergeGoogleCalendarCache,
 	googleCalendarCacheForRange,
 	googleCalendarCacheAge,
 	googleCalendarCacheCovers,

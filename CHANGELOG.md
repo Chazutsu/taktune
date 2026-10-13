@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-13
+
+### Changed
+
+- Removed Node.js process-module imports from the distributed plugin so the mobile-compatible manifest matches the runtime bundle ([#3](https://github.com/Chazutsu/taktune/issues/3)).
+- Made Google Calendar cache consumption platform-neutral and retained public ICS subscriptions as the live, Node-free calendar path.
+
+### Security
+
+- Added a release gate that rejects mobile artifacts containing `child_process` or `node:util` imports.
+
 ## [0.1.1] - 2026-10-13
 
 ### Added
@@ -47,6 +58,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Added release artifact checks for metadata consistency, required bundle files, user-specific absolute paths, and inline source maps.
 - Migrated external integration credentials to Obsidian SecretStorage and removed plaintext secrets from settings persistence and backups.
 
-[Unreleased]: https://github.com/Chazutsu/taktune/compare/0.1.1...HEAD
+[Unreleased]: https://github.com/Chazutsu/taktune/compare/0.1.2...HEAD
+[0.1.2]: https://github.com/Chazutsu/taktune/compare/0.1.1...0.1.2
 [0.1.1]: https://github.com/Chazutsu/taktune/compare/v0.1.0...0.1.1
 [0.1.0]: https://github.com/Chazutsu/taktune/releases/tag/v0.1.0

@@ -6,8 +6,6 @@ function createEnvironmentDiagnostics({ cacheAgeOf, inboxPath, settingsSchemaVer
 		googleCalendarCache = null,
 		googleCalendarEnabled = false,
 		inboxPresent,
-		isMobile,
-		nodeSupport,
 		notificationPermission,
 		performanceSnapshot,
 		secretStorage,
@@ -89,50 +87,33 @@ function createEnvironmentDiagnostics({ cacheAgeOf, inboxPath, settingsSchemaVer
 						repair: tx("diagnostics.statuses.repair", "Create at least one status in Settings"),
 					},
 		];
-		if (isMobile)
-			items.push({
-				id: "node",
-				level: "info",
-				title: "Google Calendar",
-				detail: tx("diagnostics.node.mobile", "Mobile uses the event cache saved by desktop"),
-				repair: googleCalendarEnabled
-					? ""
-					: tx(
-							"diagnostics.node.mobileRepair",
-							"Configure Google integration or subscribe to a public ICS URL",
-						),
-			});
-		else if (nodeSupport)
-			items.push({
-				id: "node",
-				level: "ok",
-				title: tx("diagnostics.node.title", "Desktop integration"),
-				detail: tx("diagnostics.node.ok", "The gws command is available"),
-				repair: "",
-			});
-		else
-			items.push({
-				id: "node",
-				level: "error",
-				title: tx("diagnostics.node.title", "Desktop integration"),
-				detail: tx("diagnostics.node.unavailable", "The Node.js process API is unavailable"),
-				repair: tx(
-					"diagnostics.node.repair",
-					"Disable restricted mode or subscribe to the calendar through ICS",
-				),
-			});
+		items.push({
+			id: "calendar-source",
+			level: "info",
+			title: "Google Calendar",
+			detail: tx(
+				"diagnostics.node.mobile",
+				"Google events use the synchronized vault cache on desktop and mobile",
+			),
+			repair: googleCalendarEnabled
+				? ""
+				: tx(
+						"diagnostics.node.mobileRepair",
+						"Enable the synchronized cache or subscribe to a public ICS URL",
+					),
+		});
 		if (googleCalendarEnabled) {
 			const cacheAge = cacheAgeOf(googleCalendarCache);
 			items.push(
 				!cacheAge.available
 					? {
 							id: "calendar-cache",
-							level: isMobile ? "error" : "info",
+							level: "error",
 							title: tx("diagnostics.cache.title", "Mobile event cache"),
 							detail: tx("diagnostics.cache.empty", "No Google events have been synced"),
 							repair: tx(
 								"diagnostics.cache.emptyRepair",
-								"Open the calendar on desktop, wait for events to load, then wait for iCloud sync",
+								"Provide a synchronized cache or subscribe to a public ICS URL",
 							),
 						}
 					: {
@@ -146,7 +127,7 @@ function createEnvironmentDiagnostics({ cacheAgeOf, inboxPath, settingsSchemaVer
 							repair: cacheAge.stale
 								? tx(
 										"diagnostics.cache.refresh",
-										"Open the calendar on desktop to refresh the event cache",
+										"Refresh the synchronized cache or use an ICS subscription",
 									)
 								: "",
 						},
@@ -221,22 +202,6 @@ function createEnvironmentDiagnostics({ cacheAgeOf, inboxPath, settingsSchemaVer
 	};
 }
 
-function gwsExecutableCandidates(configured = "", home = "", resolved = "") {
-	return [
-		...new Set(
-			[
-				resolved,
-				configured.trim(),
-				home ? `${home}/.volta/bin/gws` : "",
-				home ? `${home}/.local/bin/gws` : "",
-				"/opt/homebrew/bin/gws",
-				"/usr/local/bin/gws",
-				"gws",
-			].filter(Boolean),
-		),
-	];
-}
-
 function settledCalendarGroups(sources, groups, t) {
 	const items = [];
 	const errors = [];
@@ -250,4 +215,4 @@ function settledCalendarGroups(sources, groups, t) {
 	return { items, errors };
 }
 
-module.exports = { createEnvironmentDiagnostics, gwsExecutableCandidates, settledCalendarGroups };
+module.exports = { createEnvironmentDiagnostics, settledCalendarGroups };
