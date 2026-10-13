@@ -23,7 +23,7 @@ function readThroughPendingCache(cache, key, read) {
 	return pending;
 }
 
-async function settleAvailable(files, load, concurrency = 4) {
+async function settleAvailable(files, load, concurrency = 4, deadlineMs = Number.POSITIVE_INFINITY) {
 	const width = Math.max(1, Math.min(files.length || 1, Math.floor(concurrency) || 1));
 	const settled = Array.from({ length: files.length });
 	let nextIndex = 0;
@@ -40,12 +40,24 @@ async function settleAvailable(files, load, concurrency = 4) {
 		}
 	}
 
-	await Promise.all(Array.from({ length: width }, () => worker()));
+	const workersDone = Promise.all(Array.from({ length: width }, () => worker()));
+	if (Number.isFinite(deadlineMs) && deadlineMs >= 0) {
+		let timeoutId;
+		await Promise.race([
+			workersDone,
+			new Promise((resolve) => {
+				timeoutId = setTimeout(resolve, deadlineMs);
+			}),
+		]);
+		clearTimeout(timeoutId);
+	} else {
+		await workersDone;
+	}
 	const values = [];
 	const failedFiles = [];
 	for (let index = 0; index < settled.length; index += 1) {
 		const result = settled[index];
-		if (result.status === "fulfilled") values.push(result.value);
+		if (result?.status === "fulfilled") values.push(result.value);
 		else failedFiles.push(files[index]);
 	}
 	return { values, failedFiles };
