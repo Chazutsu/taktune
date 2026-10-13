@@ -54,29 +54,10 @@ export function diagnosticsReport(
 
 export async function copyTextToClipboard(
 	value: string,
-	clipboard: Pick<Clipboard, "writeText"> | undefined = globalThis.navigator?.clipboard,
+	clipboard: Pick<Clipboard, "writeText"> | null | undefined = activeWindow.navigator.clipboard,
 ): Promise<void> {
-	if (clipboard?.writeText) {
-		try {
-			await clipboard.writeText(value);
-			return;
-		} catch {
-			// iOS WebView may expose Clipboard API but reject it; fall back to selection copy.
-		}
-	}
-	const textarea = document.createElement("textarea");
-	textarea.value = value;
-	textarea.readOnly = true;
-	textarea.style.position = "fixed";
-	textarea.style.opacity = "0";
-	document.body.append(textarea);
-	textarea.select();
-	try {
-		if (typeof document.execCommand !== "function" || !document.execCommand("copy"))
-			throw new Error("Clipboard API unavailable");
-	} finally {
-		textarea.remove();
-	}
+	if (!clipboard?.writeText) throw new Error("Clipboard API unavailable");
+	await clipboard.writeText(value);
 }
 
 export function DiagnosticsDialog({ model }: { model: DiagnosticsDialogModel }): ReactElement {
