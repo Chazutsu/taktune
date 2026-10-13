@@ -64,6 +64,15 @@ describe("DiagnosticsDialog", () => {
 		expect(screen.getByRole("status")).toHaveTextContent("診断結果をコピーした");
 	});
 
+	it("コピー失敗を画面内で通知し、再試行できる", async () => {
+		const onCopy = vi.fn().mockRejectedValue(new Error("denied"));
+		render(<DiagnosticsDialog model={{ ...model, onCopy }} />);
+		const copy = screen.getByRole("button", { name: "診断結果をコピー" });
+		fireEvent.click(copy);
+		expect(await screen.findByRole("alert")).toHaveTextContent("コピーできなかった");
+		expect(copy).toBeEnabled();
+	});
+
 	it("接続結果を画面に保持し、コピーへ含める", async () => {
 		const onCopy = vi.fn().mockResolvedValue(undefined);
 		const onTestIntegrations = vi
@@ -102,13 +111,18 @@ describe("DiagnosticsDialog", () => {
 		expect(document.querySelector("textarea")).toBeNull();
 	});
 
-	it("Clipboard APIが拒否されたらiOS WebView向け選択コピーへ戻す", async () => {
-		const execCommand = vi.fn().mockReturnValue(true);
-		Object.defineProperty(document, "execCommand", { configurable: true, value: execCommand });
-		await copyTextToClipboard("診断結果", {
-			writeText: vi.fn().mockRejectedValue(new Error("denied")),
-		});
-		expect(execCommand).toHaveBeenCalledWith("copy");
+	it("Clipboard APIが拒否したらエラーを返し、DOMへ機密情報を残さない", async () => {
+		const error = new Error("denied");
+		await expect(
+			copyTextToClipboard("診断結果", { writeText: vi.fn().mockRejectedValue(error) }),
+		).rejects.toBe(error);
 		expect(document.querySelector("textarea")).toBeNull();
+	});
+
+	it("Clipboard APIが利用できなければ安全に失敗する", async () => {
+		await expect(copyTextToClipboard("診断結果", null)).rejects.toThrow(
+			"Clipboard API unavailable",
+		);
+		expect(document.body).not.toHaveTextContent("診断結果");
 	});
 });
