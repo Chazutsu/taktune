@@ -1,0 +1,101 @@
+@theme inline {
+	--color-ttd-canvas: var(--ttd-color-canvas);
+	--color-ttd-surface: var(--ttd-color-surface);
+	--color-ttd-surface-raised: var(--ttd-color-surface-raised);
+	--color-ttd-hover: var(--ttd-color-hover);
+	--color-ttd-selected: var(--ttd-color-selected);
+	--color-ttd-border: var(--ttd-color-border);
+	--color-ttd-text: var(--ttd-color-text);
+	--color-ttd-muted: var(--ttd-color-muted);
+	--color-ttd-faint: var(--ttd-color-faint);
+	--color-ttd-accent: var(--ttd-color-accent);
+	--color-ttd-accent-soft: var(--ttd-color-accent-soft);
+	--color-ttd-on-accent: var(--ttd-color-on-accent);
+	--color-ttd-danger: var(--ttd-color-danger);
+	--color-ttd-danger-soft: var(--ttd-color-danger-soft);
+	--color-ttd-warning: var(--ttd-color-warning);
+	--color-ttd-success: var(--ttd-color-success);
+	--color-ttd-priority-high: var(--ttd-color-priority-high);
+	--color-ttd-priority-medium: var(--ttd-color-priority-medium);
+	--radius-ttd-control: var(--ttd-radius-control);
+	--radius-ttd-card: var(--ttd-radius-card);
+	--radius-ttd-panel: var(--ttd-radius-panel);
+}
+
+.ttd-app {
+	--ttd-color-canvas: var(--background-primary);
+	--ttd-color-surface: var(--background-secondary);
+	--ttd-color-surface-raised: var(--background-secondary-alt);
+	--ttd-color-hover: var(--background-modifier-hover);
+	--ttd-color-selected: var(--background-modifier-active-hover);
+	--ttd-color-border: var(--background-modifier-border);
+	--ttd-color-text: var(--text-normal);
+	--ttd-color-muted: var(--text-muted);
+	--ttd-color-faint: var(--text-faint);
+	--ttd-color-accent: #a85d22;
+	--ttd-color-accent-soft: color-mix(in srgb, #a85d22 12%, transparent);
+	--ttd-color-on-accent: var(--text-on-accent);
+	--ttd-color-danger: var(--text-error);
+	--ttd-color-danger-soft: var(--background-modifier-error);
+	--ttd-color-warning: var(--text-warning);
+	--ttd-color-success: var(--text-success, var(--interactive-success, #2f9e62));
+	--ttd-color-priority-high: var(--color-red);
+	--ttd-color-priority-medium: var(--color-orange);
+	--ttd-space-1: 4px;
+	--ttd-space-2: 8px;
+	--ttd-space-3: 12px;
+	--ttd-space-4: 16px;
+	--ttd-radius-control: 6px;
+	--ttd-radius-card: 8px;
+	--ttd-radius-panel: 10px;
+	--ttd-control-height-compact: 32px;
+	--ttd-control-height-touch: 44px;
+	--ttd-motion-fast: 100ms;
+	--ttd-motion-panel: 160ms;
+	--ttd-ease: cubic-bezier(0.2, 0, 0, 1);
+	--ttd-shadow-floating: 0 4px 14px rgb(0 0 0 / 8%);
+	color: var(--ttd-color-text);
+	font-family: var(--font-interface, system-ui, sans-serif);
+}
+
+.theme-dark .ttd-app {
+	--ttd-color-accent: #e2a064;
+	--ttd-color-accent-soft: color-mix(in srgb, #e2a064 15%, transparent);
+}
+
+.ttd-app .mod-cta {
+	background: var(--ttd-color-accent);
+	color: var(--ttd-color-on-accent);
+}
+
+.ttd-app :is(button, input, select, textarea) {
+	font-family: inherit;
+}
+
+.ttd-app :is(button, input, select, textarea, summary, a):focus-visible {
+	outline: 2px solid var(--ttd-color-accent);
+	outline-offset: 2px;
+}
+
+.ttd-app button:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+.ttd-app [data-app-bar] button {
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+
+@media (pointer: coarse) {
+	.ttd-app :is(button, summary, select, input[type="date"], input[type="time"]) {
+		min-height: 44px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ttd-app {
+		--ttd-motion-fast: 0ms;
+		--ttd-motion-panel: 0ms;
+	}
+}

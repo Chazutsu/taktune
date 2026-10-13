@@ -1,0 +1,81 @@
+{
+	"$schema": "../../node_modules/oxlint/configuration_schema.json",
+	"plugins": ["typescript", "react", "import", "unicorn"],
+	"categories": {
+		"correctness": "error",
+		"suspicious": "warn"
+	},
+	"rules": {
+		"typescript/no-explicit-any": "error",
+		"no-new": "off",
+		"unicorn/no-empty-file": "off",
+		"react/react-in-jsx-scope": "off",
+		"react-hooks/exhaustive-deps": "error",
+		"react/immutability": "error",
+		"react/set-state-in-effect": "error",
+		"react/refs": "error",
+		"unicorn/no-useless-fallback-in-spread": "warn",
+		"unicorn/prefer-string-starts-ends-with": "warn",
+		"no-unused-vars": "error",
+		"no-useless-escape": "error",
+		"no-underscore-dangle": ["warn", { "allow": ["__test"] }]
+	},
+	"overrides": [
+		{
+			"files": [
+				"src/ui/calendar-source-dialogs.tsx",
+				"src/ui/calendar-time-blocks.tsx",
+				"src/ui/dashboard-sidebar.tsx",
+				"src/ui/quick-add-dialog.tsx",
+				"src/ui/review.tsx",
+				"tests/dashboard-flow.test.tsx"
+			],
+			"rules": { "react-hooks/exhaustive-deps": "warn" }
+		},
+		{
+			"files": ["src/ui/dashboard-sidebar.tsx"],
+			"rules": { "react/immutability": "warn" }
+		},
+		{
+			"files": [
+				"src/ui/calendar-controls.tsx",
+				"src/ui/calendar-time-blocks.tsx",
+				"src/ui/focus.tsx",
+				"src/ui/plan-tray.tsx"
+			],
+			"rules": { "react/set-state-in-effect": "warn" }
+		},
+		{
+			"files": ["src/ui/task-edit-dialog.tsx"],
+			"rules": { "react/refs": "off" }
+		},
+		{
+			"files": ["src/plugin.cjs", "tests/obsidian-shell/smoke.mjs"],
+			"rules": {
+				"no-unused-vars": "warn",
+				"no-useless-escape": "warn"
+			}
+		},
+		{
+			"files": ["src/**/*-domain.cjs"],
+			"rules": {
+				"unicorn/consistent-function-scoping": "off"
+			}
+		},
+		{
+			"files": ["tests/**/*.{ts,tsx,mjs}"],
+			"rules": {
+				"import/no-unassigned-import": "off",
+				"unicorn/consistent-function-scoping": "off"
+			}
+		}
+	],
+	"ignorePatterns": [
+		"node_modules/",
+		"dist/",
+		"main.js",
+		"test-results/",
+		"tests/visual/dist/",
+		"tests/visual/test-results/"
+	]
+}
