@@ -4704,8 +4704,11 @@ module.exports = class TaktunePlugin extends Plugin {
 	async collectIndexedFiles(files, readCache) {
 		const state = this.collectionFailureState(readCache);
 		for (const file of files) state.attemptedPaths.add(file.path);
-		const { values, failedFiles } = await settleAvailable(files, (file) =>
-			this.indexedCollectionItems(file, readCache),
+		const { values, failedFiles } = await settleAvailable(
+			files,
+			(file) => this.indexedCollectionItems(file, readCache),
+			4,
+			this.collectionReadTimeoutMs ?? COLLECTION_READ_TIMEOUT_MS,
 		);
 		const failed = new Set(failedFiles.map((file) => file.path));
 		for (const file of files) {
