@@ -4,8 +4,8 @@ import {
 	useState,
 	type ChangeEvent,
 	type DragEvent,
-	type FormEvent,
 	type ReactElement,
+	type SyntheticEvent,
 } from "react";
 import { useI18n } from "./i18n";
 
@@ -124,7 +124,7 @@ export function TaskEditDialog({
 			"note",
 			`${value.note.slice(0, start)}${prefix}${selected}${suffix}${value.note.slice(end)}`,
 		);
-		requestAnimationFrame(() => {
+		window.requestAnimationFrame(() => {
 			editor.focus();
 			editor.setSelectionRange(start + prefix.length, start + prefix.length + selected.length);
 		});
@@ -205,7 +205,7 @@ export function TaskEditDialog({
 	const field = `grid items-center [&>span]:text-xs [&>span]:text-[var(--text-muted)] [&_input]:min-h-9 [&_select]:min-h-9 max-[600px]:[&_input]:min-h-11 max-[600px]:[&_select]:min-h-11 ${compact ? "grid-cols-1 gap-1" : "grid-cols-[92px_minmax(0,1fr)] gap-3 max-[600px]:grid-cols-1 max-[600px]:gap-1"}`;
 	return (
 		<form
-			onSubmit={(event: FormEvent) => {
+			onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
 				event.preventDefault();
 				void run("save");
 			}}

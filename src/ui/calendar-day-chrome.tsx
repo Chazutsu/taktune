@@ -13,7 +13,7 @@ export interface CalendarActivity {
 	icon: string;
 	meta: string;
 	title: string;
-	type: "habit" | "focus" | "countdown" | string;
+	type: string;
 }
 
 export interface CalendarDayChromeModel {

@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent, type ReactElement } from "react";
+import { useRef, useState, type ReactElement, type SyntheticEvent } from "react";
 import { useI18n } from "./i18n";
 
 export interface CalendarTaskDialogModel<TParsed = unknown> {
@@ -24,7 +24,7 @@ export function CalendarTaskDialog<TParsed>({
 	const [pending, setPending] = useState(false);
 	const [error, setError] = useState("");
 
-	const submit = async (event: FormEvent): Promise<void> => {
+	const submit = async (event: SyntheticEvent<HTMLFormElement>): Promise<void> => {
 		event.preventDefault();
 		if (!description.trim() || pending) return;
 		setPending(true);
@@ -34,7 +34,7 @@ export function CalendarTaskDialog<TParsed>({
 		} catch (reason) {
 			setError(reason instanceof Error ? reason.message : t("calendarTask.error"));
 			setPending(false);
-			requestAnimationFrame(() => inputRef.current?.focus());
+			window.requestAnimationFrame(() => inputRef.current?.focus());
 		}
 	};
 

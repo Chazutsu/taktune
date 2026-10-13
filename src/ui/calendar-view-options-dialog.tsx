@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactElement } from "react";
+import { useState, type ReactElement, type SyntheticEvent } from "react";
 import { useI18n } from "./i18n";
 
 export interface CalendarViewOptionsValue {
@@ -89,7 +89,7 @@ export function CalendarViewOptionsDialog({
 	};
 	return (
 		<form
-			onSubmit={(event: FormEvent) => {
+			onSubmit={(event: SyntheticEvent<HTMLFormElement>) => {
 				event.preventDefault();
 				void save();
 			}}

@@ -47,16 +47,16 @@ describe("BatchActions", () => {
 	});
 
 	it("削除は確認後だけ実行し、失敗理由を行内へ残す", async () => {
-		const confirm = vi.spyOn(window, "confirm");
 		const onApply = vi.fn(async () => {
 			throw new Error("Vaultへ保存できない");
 		});
 		render(<BatchActions model={model({ onApply })} />);
-		confirm.mockReturnValueOnce(false);
 		fireEvent.click(screen.getByRole("button", { name: "削除" }));
+		expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: "キャンセル" }));
 		expect(onApply).not.toHaveBeenCalled();
-		confirm.mockReturnValueOnce(true);
 		fireEvent.click(screen.getByRole("button", { name: "削除" }));
+		fireEvent.click(screen.getAllByRole("button", { name: "削除" })[1]);
 		await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Vaultへ保存できない"));
 		expect(onApply).toHaveBeenCalledWith("delete", "");
 	});

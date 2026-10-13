@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type FormEvent, type ReactElement } from "react";
+import { useMemo, useRef, useState, type ReactElement, type SyntheticEvent } from "react";
 import { useI18n } from "./i18n";
 
 export interface QuickAddDialogTemplate {
@@ -45,10 +45,10 @@ export function QuickAddDialog<TParsed>({
 		if (!template) return;
 		setDescription(template.description);
 		setDue(template.resolvedDue);
-		requestAnimationFrame(() => inputRef.current?.focus());
+		window.requestAnimationFrame(() => inputRef.current?.focus());
 	};
 
-	const submit = async (event: FormEvent): Promise<void> => {
+	const submit = async (event: SyntheticEvent<HTMLFormElement>): Promise<void> => {
 		event.preventDefault();
 		if (!description.trim() || pending) return;
 		setPending(true);
@@ -58,7 +58,7 @@ export function QuickAddDialog<TParsed>({
 		} catch (reason) {
 			setError(reason instanceof Error ? reason.message : t("quickAdd.error"));
 			setPending(false);
-			requestAnimationFrame(() => inputRef.current?.focus());
+			window.requestAnimationFrame(() => inputRef.current?.focus());
 		}
 	};
 

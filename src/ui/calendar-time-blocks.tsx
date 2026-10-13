@@ -7,7 +7,7 @@ import {
 	type CSSProperties,
 	type DragEvent,
 	type KeyboardEvent as ReactKeyboardEvent,
-	type PointerEvent,
+	type PointerEvent as ReactPointerEvent,
 	type ReactElement,
 	type RefObject,
 } from "react";
@@ -80,7 +80,10 @@ function timeOf(minutes: number): string {
 	return `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(minutes % 60).padStart(2, "0")}`;
 }
 
-function minutesFromPointer(event: PointerEvent<HTMLElement>, startHour: number): number | null {
+function minutesFromPointer(
+	event: ReactPointerEvent<HTMLElement>,
+	startHour: number,
+): number | null {
 	const timeline = event.currentTarget.closest<HTMLElement>("[data-calendar-timeline]");
 	if (!timeline) return null;
 	const rect = timeline.getBoundingClientRect();
@@ -197,7 +200,7 @@ function TaskBlock({
 				?.querySelector<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
 				?.focus(),
 		);
-		const pointerDown = (event: globalThis.PointerEvent) => {
+		const pointerDown = (event: PointerEvent) => {
 			const target = event.target as Node | null;
 			if (
 				target &&
@@ -206,7 +209,7 @@ function TaskBlock({
 			)
 				setMenuState((current) => ({ ...current, open: false }));
 		};
-		const keyDown = (event: globalThis.KeyboardEvent) => {
+		const keyDown = (event: KeyboardEvent) => {
 			if (event.key !== "Escape") return;
 			event.preventDefault();
 			setMenuState((current) => ({ ...current, open: false }));
@@ -288,7 +291,7 @@ function TaskBlock({
 	const toggle = () => {
 		if (item.selectionMode && canChange) void item.onToggleSelection();
 	};
-	const moveResize = (event: PointerEvent<HTMLDivElement>) => {
+	const moveResize = (event: ReactPointerEvent<HTMLDivElement>) => {
 		const candidate = minutesFromPointer(event, item.startHour);
 		if (candidate !== null)
 			setResizeDraft({
@@ -296,7 +299,7 @@ function TaskBlock({
 				value: Math.max(item.startMinutes + 15, candidate),
 			});
 	};
-	const finishResize = (event: PointerEvent<HTMLDivElement>) => {
+	const finishResize = (event: ReactPointerEvent<HTMLDivElement>) => {
 		event.currentTarget.releasePointerCapture(event.pointerId);
 		if (resizingEnd !== null && resizingEnd !== item.endMinutes)
 			void runAction(() => item.onResize(resizingEnd));
