@@ -5,7 +5,6 @@ import { jaDomainTranslator } from "./domain-translator";
 const require = createRequire(import.meta.url);
 const {
 	createEnvironmentDiagnostics,
-	gwsExecutableCandidates,
 	settledCalendarGroups,
 } = require("../src/diagnostics-domain.cjs");
 
@@ -27,8 +26,6 @@ describe("diagnostics domain", () => {
 			googleCalendarCache: null,
 			googleCalendarEnabled: true,
 			inboxPresent: false,
-			isMobile: true,
-			nodeSupport: false,
 			notificationPermission: "denied",
 			performanceSnapshot: { noteCount: 30, scanMs: 420, taskCount: 100, totalMs: 1_200 },
 			secretStorage: false,
@@ -43,7 +40,7 @@ describe("diagnostics domain", () => {
 			inbox: "info",
 			secrets: "error",
 			statuses: "error",
-			node: "info",
+			"calendar-source": "info",
 			"calendar-cache": "error",
 			notifications: "error",
 			performance: "error",
@@ -52,7 +49,7 @@ describe("diagnostics domain", () => {
 			"Inboxはまだ作成されていない",
 		);
 		expect(items.find((item: { id: string }) => item.id === "calendar-cache")?.repair).toContain(
-			"デスクトップ",
+			"ICS",
 		);
 	});
 
@@ -60,8 +57,6 @@ describe("diagnostics domain", () => {
 		const base = {
 			googleCalendarEnabled: true,
 			inboxPresent: true,
-			isMobile: false,
-			nodeSupport: true,
 			notificationPermission: "granted",
 			secretStorage: true,
 			settingsVersion: 7,
@@ -88,17 +83,6 @@ describe("diagnostics domain", () => {
 		});
 		expect(fresh.find((item: { id: string }) => item.id === "performance")?.level).toBe("ok");
 		expect(stale.find((item: { id: string }) => item.id === "performance")?.level).toBe("info");
-	});
-
-	it("gws候補を優先順のまま重複排除する", () => {
-		expect(gwsExecutableCandidates(" /custom/gws ", "/Users/test", "/custom/gws")).toEqual([
-			"/custom/gws",
-			"/Users/test/.volta/bin/gws",
-			"/Users/test/.local/bin/gws",
-			"/opt/homebrew/bin/gws",
-			"/usr/local/bin/gws",
-			"gws",
-		]);
 	});
 
 	it("カレンダーの部分失敗でも取得済み予定を維持する", () => {

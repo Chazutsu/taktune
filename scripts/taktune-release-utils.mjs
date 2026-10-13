@@ -24,4 +24,7 @@ export function validateReleaseArtifactContents(artifacts) {
   if (styles.length < 1_000) throw new Error("styles.css is unexpectedly small; Tailwind output may be incomplete");
   if (main.includes("/Users/") || styles.includes("/Users/")) throw new Error("release artifacts contain a user-specific absolute path");
   if (main.includes("sourceMappingURL=data:") || styles.includes("sourceMappingURL=data:")) throw new Error("production artifacts contain an inline source map");
+  for (const moduleName of ["node:child_process", "child_process", "node:util"]) {
+    if (main.includes(moduleName)) throw new Error(`main.js contains a mobile-incompatible Node.js module: ${moduleName}`);
+  }
 }

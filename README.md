@@ -15,12 +15,11 @@ The interface defaults to English and also includes Japanese. Select **System de
 - Organize work with subtasks, sections, Kanban boards, an Eisenhower matrix, templates, estimates, progress, notes, attachments, comments, and task history.
 - Track Pomodoro or stopwatch sessions, flexible habits, important dates, completion trends, and weekly review outcomes.
 - Triage read-only Linear, Jira, and Slack items into Markdown tasks while preserving their source, external ID, link, labels, and due date.
-- Use the same self-contained plugin bundle on desktop and mobile. Desktop-fetched Google Calendar data can be exposed to mobile through a bounded, freshness-checked vault cache.
+- Use the same self-contained, Node.js-process-free plugin bundle on desktop and mobile. Taktune can read a bounded, freshness-checked Google Calendar cache already synchronized through the Vault.
 
 ## Requirements
 
 - Obsidian `1.11.4` or later
-- Desktop Obsidian for direct Google Calendar refresh through `gws`
 - An iCloud-, Obsidian Sync-, or Git-synchronized vault if the same Markdown data should be available on multiple devices
 
 The plugin does not require Dataview or Metadata Menu.
@@ -111,11 +110,22 @@ Imported and dismissed external-item histories are bounded to the latest 1,000 e
 - Day-based timelines support up to four additional IANA time zones, a current-time line, synchronized scrolling, drag-and-drop placement, pointer resizing, and conflict warnings.
 - Empty timeline space can create a timed task directly. Unscheduled tasks can be searched, sorted, selected, and placed sequentially at a chosen time or into verified free slots.
 - Multi-select can postpone scheduled tasks by one day, one week, or to a specific date while preserving time and duration.
-- Google Calendar selection, names, and colors are read from Google. The default selection is only the primary calendar.
+- Google Calendar selection, names, and colors can be read from an existing synchronized cache. The default selection is only the primary calendar.
 - Public Outlook, iCloud, and generic `https://` or `webcal://` ICS subscriptions support independent visibility, labels, colors, timed/all-day events, common recurrence rules, and exclusion dates.
 - A partial calendar-source failure does not discard events fetched successfully from other sources; the timeline identifies the failed source and reason.
 
 All external calendar and issue integrations are read-only. Taktune does not create or update data in Google Calendar, Linear, Jira, or Slack.
+
+## Network and external access
+
+Taktune uses Obsidian's `requestUrl` API only when a configured feature needs remote data:
+
+- ICS subscription URLs entered by the user are fetched to render calendar events.
+- `https://api.linear.app/graphql` is contacted when Linear import is enabled.
+- The Jira base URL entered by the user is contacted when Jira import is enabled.
+- `https://slack.com/api/bookmarks.list` is contacted when Slack import is enabled.
+
+Linear, Jira, and Slack credentials stay in Obsidian SecretStorage. Taktune does not include analytics, telemetry, advertising, or an author-operated backend. The distributed `main.js` does not import Node.js process APIs or launch external executables.
 
 ## Reviews, focus, habits, and milestones
 
@@ -130,7 +140,7 @@ All external calendar and issue integrations are read-only. Taktune does not cre
 
 The distributed plugin is a single CommonJS `main.js` plus `styles.css` and `manifest.json`; runtime source modules are not required on the device. Mobile UI avoids hover-only actions, uses explicit navigation dismissal, exposes non-DnD alternatives for board and matrix moves, and expands primary touch targets to 40–44px at narrow widths.
 
-Google Calendar cannot refresh directly on mobile. After desktop refresh, Taktune reads the synchronized cache only when it covers the selected calendars and date range. It never presents an uncached range as an empty calendar.
+Taktune does not execute `gws` or another external command on any platform. It reads a pre-existing synchronized Google Calendar cache only when that cache covers the selected calendars and date range; otherwise it reports the missing range. For live refresh without a companion cache producer, add a public Google Calendar ICS URL as a subscription.
 
 ## Development
 
@@ -153,7 +163,7 @@ The **Release Taktune** workflow checks version consistency, runs the regression
 
 - Desktop behavior, large-vault collection, bundle behavior, schema migration, and the principal task-to-review journey have automated coverage.
 - Mobile startup is covered in a Node-API-free harness, but installation, updates, and the complete interaction flow still require recurring validation on a physical iPhone.
-- Google Calendar has passed a live Obsidian integration smoke test. Linear, Jira, and Slack were not configured in that environment, so their full live import-to-review journey remains unverified.
+- Google Calendar cache rendering has automated coverage. Cache production is external to the plugin; Linear, Jira, and Slack were not configured in the live test environment, so their full live import-to-review journey remains unverified.
 - Horizontal Gantt planning, OR/NOT saved-filter logic, arbitrary Eisenhower rules, OS widgets, sticky notes, and built-in multi-user collaboration are not implemented.
 - Collaboration and synchronization are delegated to Obsidian Sync, iCloud, Git, or a shared vault.
 

@@ -752,7 +752,7 @@ module.exports = {
 	"settings.integrations.calendar": "Calendar",
 	"settings.integrations.google": "Google Calendar",
 	"settings.integrations.googleDescription":
-		"Read with gws on desktop and show the synchronized cache in the iPhone timeline.",
+		"Read a synchronized Vault cache on desktop and mobile. For live updates, use an ICS subscription.",
 	"settings.integrations.gws": "gws executable",
 	"settings.integrations.gwsDescription":
 		"Usually leave blank for automatic detection. Specify an absolute path only if it cannot be found.",

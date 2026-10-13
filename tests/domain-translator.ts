@@ -54,7 +54,7 @@ const messages: Record<string, string> = {
 	"task.group.noSection": "セクションなし",
 	"diagnostics.inbox.missing": "Inboxはまだ作成されていない",
 	"diagnostics.cache.age": "{count}件 · {hours}時間前に更新",
-	"diagnostics.cache.emptyRepair": "デスクトップで時間割を開き、予定の取得完了後にiCloud同期を待つ",
+	"diagnostics.cache.emptyRepair": "同期済みキャッシュを用意するか、公開ICS URLを購読する",
 	"stats.completed": "直近7日の完了",
 	"stats.plan": "直近7日の計画実行",
 	"stats.planValue": "{completed}/{planned}件",
