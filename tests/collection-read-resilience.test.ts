@@ -58,6 +58,29 @@ describe("Taktune collection read resilience", () => {
 		expect(result.values).toEqual(["a.md", "b.md"]);
 	});
 
+	it("全体期限で未処理ノートを失敗扱いにし、制限並列のbackground取得は継続する", async () => {
+		vi.useFakeTimers();
+		const files = Array.from({ length: 12 }, (_, index) => ({ path: `${index}.md` }));
+		const started: string[] = [];
+		const pending = new Promise<string>(() => undefined);
+		const resultPromise = settleAvailable(
+			files,
+			async (file: { path: string }) => {
+				started.push(file.path);
+				return pending;
+			},
+			4,
+			25,
+		);
+
+		await vi.advanceTimersByTimeAsync(25);
+		const result = await resultPromise;
+
+		expect(started).toEqual(["0.md", "1.md", "2.md", "3.md"]);
+		expect(result.values).toEqual([]);
+		expect(result.failedFiles).toEqual(files);
+	});
+
 	it("期限切れ後の再試行で未完了の実読み込みを重複させない", async () => {
 		vi.useFakeTimers();
 		const cache = new Map<string, Promise<string>>();
