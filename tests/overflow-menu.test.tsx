@@ -96,8 +96,13 @@ describe("OverflowMenu", () => {
 		const item = screen.getByRole("menuitem");
 		await waitFor(() => expect(item).toHaveFocus());
 		expect(menu).toHaveClass("ttd-app");
-		expect(getComputedStyle(menu).getPropertyValue("--ttd-color-canvas")).toBe(background);
-		expect(getComputedStyle(menu).getPropertyValue("--ttd-color-text")).toBe(text);
+		const normalizeCssColor = (value: string) => value.replaceAll(" ", "");
+		expect(normalizeCssColor(getComputedStyle(menu).getPropertyValue("--ttd-color-canvas"))).toBe(
+			normalizeCssColor(background),
+		);
+		expect(normalizeCssColor(getComputedStyle(menu).getPropertyValue("--ttd-color-text"))).toBe(
+			normalizeCssColor(text),
+		);
 		style.remove();
 		document.body.className = "";
 	});
